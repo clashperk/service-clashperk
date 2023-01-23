@@ -20,8 +20,8 @@ export class PlayerLink {
     @Prop()
     order: number;
 
-    // @Prop()
-    // verified: boolean;
+    @Prop()
+    verified: boolean;
 
     @Prop()
     createdAt: Date;
