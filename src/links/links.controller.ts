@@ -17,9 +17,9 @@ export class LinksController {
         return this.linksService.findAll(body);
     }
 
-    @Get('/:tag')
+    @Get('/:id')
     @UseGuards(JwtAuthGuard)
-    async getLink(@Param('tag') tag: string) {
-        return this.linksService.findOne(tag);
+    async getLink(@Param('id') id: string) {
+        return this.linksService.findOne(id);
     }
 }
