@@ -86,6 +86,7 @@ export class WarsService {
                     },
                     members: {
                         tag: 1,
+                        name: 1,
                         townhallLevel: 1,
                         mapPosition: 1,
                         attacks: {
