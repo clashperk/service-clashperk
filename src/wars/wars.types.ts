@@ -1,4 +1,6 @@
 export interface WarHistory {
+    id: number;
+    warType: number;
     startTime: string;
     endTime: string;
     clan: {

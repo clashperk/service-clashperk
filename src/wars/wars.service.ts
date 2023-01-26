@@ -74,6 +74,8 @@ export class WarsService {
             },
             {
                 $project: {
+                    id: 1,
+                    warType: 1,
                     startTime: 1,
                     endTime: 1,
                     clan: {
@@ -114,6 +116,8 @@ export class WarsService {
                 return { ...attack, defender };
             });
             history.push({
+                id: war.id,
+                warType: war.warType,
                 startTime: war.startTime,
                 endTime: war.endTime,
                 clan: war.clan,

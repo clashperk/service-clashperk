@@ -15,8 +15,8 @@ export class WarsController {
         return this.warService.getOne(tag);
     }
 
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles(Role.Admin)
+    // @UseGuards(JwtAuthGuard, RolesGuard)
+    // @Roles(Role.Admin)
     @Get('/:id')
     async getWar(@Param('id') id: string) {
         return this.warService.getWar(id);
