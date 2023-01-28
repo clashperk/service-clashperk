@@ -12,7 +12,7 @@ export class WarsService {
     async getOne(tag: string) {
         const cursor = this.clanWarModel.aggregate<{
             history: WarHistory[];
-            summary: { season: string; wars: number; rounds: number; stars: number }[];
+            summary: { season: string; wars: number; rounds: number; stars: number; attacks: number }[];
         }>([
             {
                 $match: {
@@ -204,12 +204,24 @@ export class WarsService {
                                                 }
                                             }
                                         }
+                                    },
+                                    {
+                                        $set: {
+                                            attacks: {
+                                                $sum: {
+                                                    $cond: [{ $eq: ['$stars', 0] }, 0, 1]
+                                                }
+                                            }
+                                        }
                                     }
                                 ]
                             }
                         },
                         {
                             $set: {
+                                attacks: {
+                                    $sum: '$wars.attacks'
+                                },
                                 stars: {
                                     $sum: '$wars.stars'
                                 },
@@ -247,6 +259,7 @@ export class WarsService {
                         },
                         {
                             $project: {
+                                attacks: 1,
                                 season: 1,
                                 wars: 1,
                                 stars: 1,
