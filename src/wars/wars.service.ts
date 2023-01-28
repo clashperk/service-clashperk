@@ -10,7 +10,10 @@ export class WarsService {
     constructor(@InjectModel(ClanWar.name) private clanWarModel: Model<ClanWarDocument>) {}
 
     async getOne(tag: string) {
-        const cursor = this.clanWarModel.aggregate<WarHistory>([
+        const cursor = this.clanWarModel.aggregate<{
+            history: WarHistory[];
+            summary: { season: string; wars: number; rounds: number; stars: number }[];
+        }>([
             {
                 $match: {
                     $or: [
@@ -40,113 +43,236 @@ export class WarsService {
             //     $limit: 30
             // },
             {
-                $set: {
-                    members: {
-                        $filter: {
-                            input: {
-                                $concatArrays: ['$opponent.members', '$clan.members']
-                            },
-                            as: 'member',
-                            cond: {
-                                $eq: ['$$member.tag', tag]
+                $facet: {
+                    history: [
+                        {
+                            $set: {
+                                members: {
+                                    $filter: {
+                                        input: {
+                                            $concatArrays: ['$opponent.members', '$clan.members']
+                                        },
+                                        as: 'member',
+                                        cond: {
+                                            $eq: ['$$member.tag', tag]
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            $set: {
+                                defenderTags: {
+                                    $arrayElemAt: ['$members.attacks.defenderTag', 0]
+                                }
+                            }
+                        },
+                        {
+                            $set: {
+                                defenders: {
+                                    $filter: {
+                                        input: {
+                                            $concatArrays: ['$opponent.members', '$clan.members']
+                                        },
+                                        as: 'member',
+                                        cond: {
+                                            $in: [
+                                                '$$member.tag',
+                                                {
+                                                    $cond: [{ $anyElementTrue: [['$defenderTags']] }, '$defenderTags', []]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            $project: {
+                                id: 1,
+                                warType: 1,
+                                startTime: '$preparationStartTime',
+                                endTime: '$preparationStartTime',
+                                clan: {
+                                    $cond: [
+                                        {
+                                            $in: [tag, '$clan.members.tag']
+                                        },
+                                        {
+                                            name: '$clan.name',
+                                            tag: '$clan.tag'
+                                        },
+                                        {
+                                            name: '$opponent.name',
+                                            tag: '$opponent.tag'
+                                        }
+                                    ]
+                                },
+                                opponent: {
+                                    $cond: [
+                                        {
+                                            $in: [tag, '$clan.members.tag']
+                                        },
+                                        {
+                                            name: '$opponent.name',
+                                            tag: '$opponent.tag'
+                                        },
+                                        {
+                                            name: '$clan.name',
+                                            tag: '$clan.tag'
+                                        }
+                                    ]
+                                },
+                                members: {
+                                    tag: 1,
+                                    name: 1,
+                                    townhallLevel: 1,
+                                    mapPosition: 1,
+                                    attacks: {
+                                        stars: 1,
+                                        defenderTag: 1,
+                                        destructionPercentage: 1
+                                    }
+                                },
+                                defenders: {
+                                    tag: 1,
+                                    townhallLevel: 1,
+                                    mapPosition: 1
+                                }
                             }
                         }
-                    }
-                }
-            },
-            {
-                $set: {
-                    defenderTags: {
-                        $arrayElemAt: ['$members.attacks.defenderTag', 0]
-                    }
-                }
-            },
-            {
-                $set: {
-                    defenders: {
-                        $filter: {
-                            input: {
-                                $concatArrays: ['$opponent.members', '$clan.members']
-                            },
-                            as: 'member',
-                            cond: {
-                                $in: [
-                                    '$$member.tag',
+                    ],
+                    summary: [
+                        {
+                            $group: {
+                                _id: '$leagueGroupId',
+                                leagueGroupId: {
+                                    $first: '$leagueGroupId'
+                                },
+                                season: {
+                                    $first: '$season'
+                                }
+                            }
+                        },
+                        {
+                            $lookup: {
+                                from: 'ClanWars',
+                                localField: 'leagueGroupId',
+                                foreignField: 'leagueGroupId',
+                                as: 'wars',
+                                pipeline: [
                                     {
-                                        $cond: [{ $anyElementTrue: [['$defenderTags']] }, '$defenderTags', []]
+                                        $match: {
+                                            $or: [
+                                                {
+                                                    'clan.members.tag': tag
+                                                },
+                                                {
+                                                    'opponent.members.tag': tag
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        $project: {
+                                            members: {
+                                                $filter: {
+                                                    input: {
+                                                        $concatArrays: ['$opponent.members', '$clan.members']
+                                                    },
+                                                    as: 'member',
+                                                    cond: {
+                                                        $eq: ['$$member.tag', '#8C909VYCP']
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        $sort: {
+                                            _id: -1
+                                        }
+                                    },
+                                    {
+                                        $unwind: '$members'
+                                    },
+                                    {
+                                        $project: {
+                                            stars: {
+                                                $sum: {
+                                                    $max: ['$members.attacks.stars', 0]
+                                                }
+                                            }
+                                        }
                                     }
                                 ]
                             }
-                        }
-                    }
-                }
-            },
-            {
-                $project: {
-                    id: 1,
-                    warType: 1,
-                    startTime: 1,
-                    endTime: 1,
-                    clan: {
-                        $cond: [
-                            {
-                                $in: [tag, '$clan.members.tag']
-                            },
-                            {
-                                name: '$clan.name',
-                                tag: '$clan.tag'
-                            },
-                            {
-                                name: '$opponent.name',
-                                tag: '$opponent.tag'
+                        },
+                        {
+                            $set: {
+                                stars: {
+                                    $sum: '$wars.stars'
+                                },
+                                wars: {
+                                    $size: '$wars'
+                                }
                             }
-                        ]
-                    },
-                    opponent: {
-                        $cond: [
-                            {
-                                $in: [tag, '$clan.members.tag']
-                            },
-                            {
-                                name: '$opponent.name',
-                                tag: '$opponent.tag'
-                            },
-                            {
-                                name: '$clan.name',
-                                tag: '$clan.tag'
+                        },
+                        {
+                            $lookup: {
+                                from: 'CWLGroups',
+                                localField: 'leagueGroupId',
+                                foreignField: 'id',
+                                as: 'leagueGroup',
+                                pipeline: [
+                                    {
+                                        $project: {
+                                            rounds: {
+                                                $subtract: [
+                                                    {
+                                                        $size: '$clans'
+                                                    },
+                                                    1
+                                                ]
+                                            }
+                                        }
+                                    }
+                                ]
                             }
-                        ]
-                    },
-                    members: {
-                        tag: 1,
-                        name: 1,
-                        townhallLevel: 1,
-                        mapPosition: 1,
-                        attacks: {
-                            stars: 1,
-                            defenderTag: 1,
-                            destructionPercentage: 1
+                        },
+                        {
+                            $unwind: {
+                                path: '$leagueGroup'
+                            }
+                        },
+                        {
+                            $project: {
+                                season: 1,
+                                wars: 1,
+                                stars: 1,
+                                rounds: '$leagueGroup.rounds'
+                            }
+                        },
+                        {
+                            $sort: {
+                                season: -1
+                            }
                         }
-                    },
-                    defenders: {
-                        tag: 1,
-                        townhallLevel: 1,
-                        mapPosition: 1
-                    }
+                    ]
                 }
             }
         ]);
 
-        const wars = await cursor.exec();
+        const [{ history, summary }] = await cursor.exec();
 
-        const history = [];
-        for (const war of wars) {
+        const wars = [];
+        for (const war of history) {
             const attacker = war.members[0];
             const attacks = (attacker.attacks ?? []).map((attack) => {
                 const defender = war.defenders.find((defender) => defender.tag === attack.defenderTag);
                 return { ...attack, defender };
             });
-            history.push({
+            wars.push({
                 id: war.id,
                 warType: war.warType,
                 startTime: war.startTime,
@@ -163,7 +289,7 @@ export class WarsService {
             });
         }
 
-        return history;
+        return { wars, summary };
     }
 
     async getWar(id: string) {
