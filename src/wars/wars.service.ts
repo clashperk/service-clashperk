@@ -31,14 +31,14 @@ export class WarsService {
                     _id: -1
                 }
             },
-            {
-                $sort: {
-                    endTime: -1
-                }
-            },
-            {
-                $limit: 30
-            },
+            // {
+            //     $sort: {
+            //         endTime: -1
+            //     }
+            // },
+            // {
+            //     $limit: 30
+            // },
             {
                 $set: {
                     members: {
