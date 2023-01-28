@@ -28,6 +28,11 @@ export class WarsService {
                 }
             },
             {
+                $sort: {
+                    endTime: -1
+                }
+            },
+            {
                 $limit: 30
             },
             {
@@ -79,12 +84,34 @@ export class WarsService {
                     startTime: 1,
                     endTime: 1,
                     clan: {
-                        name: 1,
-                        tag: 1
+                        $cond: [
+                            {
+                                $in: [tag, '$clan.members.tag']
+                            },
+                            {
+                                name: '$clan.name',
+                                tag: '$clan.tag'
+                            },
+                            {
+                                name: '$opponent.name',
+                                tag: '$opponent.tag'
+                            }
+                        ]
                     },
                     opponent: {
-                        name: 1,
-                        tag: 1
+                        $cond: [
+                            {
+                                $in: [tag, '$clan.members.tag']
+                            },
+                            {
+                                name: '$opponent.name',
+                                tag: '$opponent.tag'
+                            },
+                            {
+                                name: '$clan.name',
+                                tag: '$clan.tag'
+                            }
+                        ]
                     },
                     members: {
                         tag: 1,
