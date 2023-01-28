@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Header, Param, UseGuards } from '@nestjs/common';
 import { Role, Roles } from '../auth/decorators/roles.decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -10,13 +10,15 @@ export class WarsController {
 
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(Role.Admin)
+    @Header('Cache-Control', 'max-age=600')
     @Get('/members/:tag')
     async getWars(@Param('tag') tag: string) {
         return this.warService.getOne(tag);
     }
 
-    // @UseGuards(JwtAuthGuard, RolesGuard)
-    // @Roles(Role.Admin)
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.Admin)
+    @Header('Cache-Control', 'max-age=600')
     @Get('/:id')
     async getWar(@Param('id') id: string) {
         return this.warService.getWar(id);
