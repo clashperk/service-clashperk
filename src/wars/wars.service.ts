@@ -1,5 +1,6 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import moment from 'moment';
 import { Model } from 'mongoose';
 import { ClanWar, ClanWarDocument } from './schemas/wars.schema';
 import { WarHistory } from './wars.types';
@@ -19,7 +20,10 @@ export class WarsService {
                         {
                             'opponent.members.tag': tag
                         }
-                    ]
+                    ],
+                    preparationStartTime: {
+                        $gte: moment().startOf('month').subtract(3, 'month').toDate()
+                    }
                 }
             },
             {
