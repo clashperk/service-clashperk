@@ -25,7 +25,10 @@ export class WarsService {
                         }
                     ],
                     preparationStartTime: {
-                        $gte: moment().startOf('month').subtract(3, 'month').toDate()
+                        $gte: moment()
+                            .startOf('month')
+                            .subtract(new Date().getDate() >= 10 ? 2 : 3, 'month')
+                            .toDate()
                     }
                 }
             },
