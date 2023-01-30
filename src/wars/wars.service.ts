@@ -185,7 +185,7 @@ export class WarsService {
                                                     },
                                                     as: 'member',
                                                     cond: {
-                                                        $eq: ['$$member.tag', '#8C909VYCP']
+                                                        $eq: ['$$member.tag', tag]
                                                     }
                                                 }
                                             }
