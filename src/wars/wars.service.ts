@@ -212,7 +212,7 @@ export class WarsService {
                                         $set: {
                                             attacks: {
                                                 $sum: {
-                                                    $cond: [{ $eq: ['$stars', 0] }, 0, 1]
+                                                    $cond: [{ $eq: ['$member.attacks.stars', 0] }, 0, 1]
                                                 }
                                             }
                                         }
