@@ -1,6 +1,6 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { APIClanWar } from 'clashofclans.js';
+import { APIClanWar, APIWarClan } from 'clashofclans.js';
 import moment from 'moment';
 import { Model } from 'mongoose';
 import { ClanWar, ClanWarDocument } from './schemas/wars.schema';
@@ -387,6 +387,9 @@ export class WarsService {
                 };
             });
 
+        clan.members.sort((a, b) => a.mapPosition - b.mapPosition).map((member, n) => ({ ...member, mapPosition: n + 1 }));
+        opponent.members.sort((a, b) => a.mapPosition - b.mapPosition).map((member, n) => ({ ...member, mapPosition: n + 1 }));
+
         return {
             ...body,
             clan: {
@@ -419,7 +422,17 @@ export class WarsService {
                         defenses
                     };
                 })
-            }
+            },
+            result: this.getWarResult(clan, opponent)
         };
+    }
+
+    private getWarResult(clan: APIWarClan, opponent: APIWarClan) {
+        if (clan.stars === opponent.stars) {
+            if (clan.destructionPercentage === opponent.destructionPercentage) return 'tied';
+            if (clan.destructionPercentage > opponent.destructionPercentage) return 'won';
+        }
+        if (clan.stars > opponent.stars) return 'won';
+        return 'lost';
     }
 }
