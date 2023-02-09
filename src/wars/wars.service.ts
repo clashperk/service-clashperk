@@ -1,5 +1,6 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { APIClanWar } from 'clashofclans.js';
 import moment from 'moment';
 import { Model } from 'mongoose';
 import { ClanWar, ClanWarDocument } from './schemas/wars.schema';
@@ -308,9 +309,117 @@ export class WarsService {
         return { wars, summary };
     }
 
-    async getWar(id: string) {
-        const data = await this.clanWarModel.findOne({ id: Number(id) });
-        if (!data) throw new HttpException('Not Found', 404);
-        return data;
+    async getWar(id: string, clanTag?: string) {
+        const body = (
+            await this.clanWarModel.findOne(
+                { id: Number(id) },
+                { uid: 0, warType: 0, id: 0, updatedAt: 0, createdAt: 0, season: 0, _id: 0 }
+            )
+        ).toJSON() as unknown as APIClanWar;
+        if (!body) throw new HttpException('Not Found', 404);
+
+        const clan = [body.clan.tag, body.opponent.tag].includes(clanTag)
+            ? body.clan.tag === clanTag
+                ? body.clan
+                : body.opponent
+            : body.clan;
+        const opponent = body.clan.tag === clan.tag ? body.opponent : body.clan;
+
+        const __attacks = clan.members
+            .filter((member) => member.attacks?.length)
+            .map((m) => m.attacks)
+            .flat()
+            .sort((a, b) => a.order - b.order)
+            .map((atk, _, __attacks) => {
+                const defender = opponent.members.find((m) => m.tag === atk.defenderTag);
+                const defenderDefenses = __attacks.filter((atk) => atk.defenderTag === defender.tag);
+                const isFresh = defenderDefenses.length === 0 || atk.order === Math.min(...defenderDefenses.map((d) => d.order));
+                const previousBestAttack = isFresh
+                    ? null
+                    : [...__attacks]
+                          .filter(
+                              (_atk) => _atk.defenderTag === defender.tag && _atk.order < atk.order && _atk.attackerTag !== atk.attackerTag
+                          )
+                          .sort((a, b) => b.destructionPercentage ** b.stars - a.destructionPercentage ** a.stars)
+                          .at(0) ?? null;
+
+                return {
+                    ...atk,
+                    isFresh,
+                    oldStars: previousBestAttack?.stars ?? 0,
+                    defender: {
+                        name: defender.name,
+                        tag: defender.tag,
+                        townhallLevel: defender.townhallLevel,
+                        mapPosition: defender.mapPosition
+                    }
+                };
+            });
+
+        const __defenses = opponent.members
+            .filter((member) => member.attacks?.length)
+            .map((m) => m.attacks)
+            .flat()
+            .sort((a, b) => a.order - b.order)
+            .map((atk, _, __defenses) => {
+                const defender = clan.members.find((m) => m.tag === atk.defenderTag);
+                const defenderDefenses = __defenses.filter((atk) => atk.defenderTag === defender.tag);
+                const isFresh = defenderDefenses.length === 0 || atk.order === Math.min(...defenderDefenses.map((d) => d.order));
+                const previousBestAttack = isFresh
+                    ? null
+                    : [...__defenses]
+                          .filter(
+                              (_atk) => _atk.defenderTag === defender.tag && _atk.order < atk.order && _atk.attackerTag !== atk.attackerTag
+                          )
+                          .sort((a, b) => b.destructionPercentage ** b.stars - a.destructionPercentage ** a.stars)
+                          .at(0) ?? null;
+
+                return {
+                    ...atk,
+                    isFresh,
+                    oldStars: previousBestAttack?.stars ?? 0,
+                    defender: {
+                        name: defender.name,
+                        tag: defender.tag,
+                        townhallLevel: defender.townhallLevel,
+                        mapPosition: defender.mapPosition
+                    }
+                };
+            });
+
+        return {
+            ...body,
+            clan: {
+                ...clan,
+                members: clan.members.map((member) => {
+                    const attacks = __attacks.filter((a) => a.attackerTag === member.tag);
+                    const defenses = __defenses.filter((d) => d.defenderTag === member.tag);
+
+                    return {
+                        name: member.name,
+                        tag: member.tag,
+                        townhallLevel: member.townhallLevel,
+                        mapPosition: member.mapPosition,
+                        attacks,
+                        defenses
+                    };
+                })
+            },
+            opponent: {
+                ...opponent,
+                members: opponent.members.map((member) => {
+                    const attacks = __defenses.filter((a) => a.attackerTag === member.tag);
+                    const defenses = __attacks.filter((d) => d.defenderTag === member.tag);
+                    return {
+                        name: member.name,
+                        tag: member.tag,
+                        townhallLevel: member.townhallLevel,
+                        mapPosition: member.mapPosition,
+                        attacks,
+                        defenses
+                    };
+                })
+            }
+        };
     }
 }
