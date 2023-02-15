@@ -13,7 +13,15 @@ export class WarsService {
     async getOne(tag: string) {
         const cursor = this.clanWarModel.aggregate<{
             history: WarHistory[];
-            summary: { season: string; wars: number; rounds: number; stars: number; attacks: number }[];
+            summary: {
+                season: string;
+                wars: number;
+                rounds: number;
+                stars: number;
+                attacks: number;
+                missed: number;
+                destruction: number;
+            }[];
         }>([
             {
                 $match: {
@@ -28,7 +36,7 @@ export class WarsService {
                     preparationStartTime: {
                         $gte: moment()
                             .startOf('month')
-                            .subtract(new Date().getDate() >= 10 ? 2 : 3, 'month')
+                            .subtract(new Date().getDate() >= 10 ? 3 : 4, 'month')
                             .toDate()
                     }
                 }
@@ -201,19 +209,31 @@ export class WarsService {
                                         $unwind: '$members'
                                     },
                                     {
-                                        $project: {
+                                        $set: {
                                             stars: {
                                                 $sum: {
                                                     $max: ['$members.attacks.stars', 0]
                                                 }
-                                            }
-                                        }
-                                    },
-                                    {
-                                        $set: {
+                                            },
+                                            destruction: {
+                                                $sum: {
+                                                    $max: ['$members.attacks.destructionPercentage', 0]
+                                                }
+                                            },
                                             attacks: {
                                                 $sum: {
-                                                    $cond: [{ $eq: ['$member.attacks.stars', 0] }, 0, 1]
+                                                    $cond: [{ $eq: ['$members.attacks.stars', 0] }, 0, 1]
+                                                }
+                                            },
+                                            missed: {
+                                                $sum: {
+                                                    $cond: [
+                                                        {
+                                                            $anyElementTrue: [['$members.attacks']]
+                                                        },
+                                                        0,
+                                                        1
+                                                    ]
                                                 }
                                             }
                                         }
@@ -223,14 +243,20 @@ export class WarsService {
                         },
                         {
                             $set: {
-                                attacks: {
-                                    $sum: '$wars.attacks'
+                                wars: {
+                                    $size: '$wars'
                                 },
                                 stars: {
                                     $sum: '$wars.stars'
                                 },
-                                wars: {
-                                    $size: '$wars'
+                                attacks: {
+                                    $sum: '$wars.attacks'
+                                },
+                                missed: {
+                                    $sum: '$wars.missed'
+                                },
+                                destruction: {
+                                    $sum: '$wars.destruction'
                                 }
                             }
                         },
@@ -267,6 +293,8 @@ export class WarsService {
                                 season: 1,
                                 wars: 1,
                                 stars: 1,
+                                missed: 1,
+                                destruction: 1,
                                 rounds: '$leagueGroup.rounds'
                             }
                         },
@@ -284,7 +312,7 @@ export class WarsService {
 
         const wars = [];
         for (const war of history) {
-            const attacker = war.members[0];
+            const attacker = war.members.at(0);
             const attacks = (attacker.attacks ?? []).map((attack) => {
                 const defender = war.defenders.find((defender) => defender.tag === attack.defenderTag);
                 return { ...attack, defender };
