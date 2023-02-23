@@ -11,6 +11,11 @@ export class LinksService {
         if (!Array.isArray(args)) {
             throw new HttpException({ reason: 'Argument must be an array of strings.' }, 400);
         }
+        const isString = args.every((arg) => typeof arg === 'string');
+        if (!isString) {
+            throw new HttpException({ reason: 'Argument must be an array of strings.' }, 400);
+        }
+
         const isId = args.every((id) => /^\d{17,19}/.test(id));
         const where = isId ? { userId: { $in: args } } : { tag: { $in: args } };
         return this.playerLinkModel.find(where, { name: 1, tag: 1, userId: 1, username: 1, _id: 0 }).limit(100);
