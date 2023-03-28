@@ -21,21 +21,36 @@ export class LinksService {
         return this.playerLinkModel.find(where, { name: 1, tag: 1, userId: 1, username: 1, _id: 0 }).limit(100);
     }
 
-    async findOne(query: string): Promise<PlayerLink> {
+    async findOne(query: string): Promise<PlayerLink[]> {
         if (typeof query !== 'string') {
             throw new HttpException({ reason: 'Argument must be a string.' }, 400);
         }
         const isId = /^\d{17,19}/.test(query);
         const where = isId ? { userId: query } : { tag: query };
 
-        const data = await this.playerLinkModel.findOne(where, {
+        const links = await this.playerLinkModel.find(where, {
             name: 1,
             tag: 1,
             userId: 1,
             username: 1,
             _id: 0
         });
-        if (!data) throw new HttpException('Not Found', 404);
-        return data;
+        return links;
+    }
+
+    async create(link: Omit<PlayerLink, 'order' | 'verified' | 'createdAt'>): Promise<PlayerLink> {
+        const links = await this.playerLinkModel.find({ userId: link.userId });
+
+        const createdLink = new this.playerLinkModel({
+            name: link.name,
+            tag: link.tag,
+            userId: link.userId,
+            username: link.username,
+            order: Math.max(...links.map((link) => link.order)) + 1,
+            verified: false,
+            createdAt: new Date()
+        });
+
+        return createdLink.save();
     }
 }

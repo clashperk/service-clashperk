@@ -15,4 +15,11 @@ export class ClansController {
     async getCapitalDonations(@Param('clanTag') clanTag: string) {
         return this.clansService.getCapitalDonations(clanTag);
     }
+
+    @Get('/:clanTag/members')
+    @Roles(Role.AppUser)
+    @UseGuards(JwtAuthGuard)
+    async getClanMembers(@Param('clanTag') clanTag: string) {
+        return this.clansService.getClanMembers(clanTag);
+    }
 }

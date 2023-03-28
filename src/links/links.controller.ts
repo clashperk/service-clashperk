@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, Param, Post, UseGuards } from '@nestjs/common';
+import { Role, Roles } from '../auth/decorators/roles.decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { LinksService } from './links.service';
 
@@ -21,5 +22,16 @@ export class LinksController {
     @UseGuards(JwtAuthGuard)
     async getLink(@Param('id') id: string) {
         return this.linksService.findOne(id);
+    }
+
+    @Post('/')
+    @Roles(Role.AppUser)
+    @UseGuards(JwtAuthGuard)
+    async createLink(@Body() body: { name: string; tag: string; userId: string; username: string }) {
+        if (!(body.name && body.tag && body.userId && body.username)) {
+            throw new HttpException({ reason: 'Missing required fields.' }, 400);
+        }
+
+        return this.linksService.create(body);
     }
 }

@@ -1,13 +1,15 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { ClansModule } from './clans/clans.module';
+import { GuildsModule } from './guilds/guilds.module';
 import { LinksModule } from './links/links.module';
 import { UsersModule } from './users/users.module';
 import { WarsModule } from './wars/wars.module';
-import { ClansModule } from './clans/clans.module';
 
 @Module({
     imports: [
@@ -19,11 +21,16 @@ import { ClansModule } from './clans/clans.module';
             }),
             inject: [ConfigService]
         }),
+        ThrottlerModule.forRoot({
+            ttl: 60,
+            limit: 10
+        }),
         UsersModule,
         AuthModule,
         LinksModule,
         WarsModule,
-        ClansModule
+        ClansModule,
+        GuildsModule
     ],
     controllers: [AppController],
     providers: [AppService]
