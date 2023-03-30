@@ -1,4 +1,5 @@
-import { Body, Controller, Get, HttpException, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, Param, Post, UseGuards } from '@nestjs/common';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Role, Roles } from '../auth/decorators/roles.decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { LinksService } from './links.service';
@@ -33,5 +34,13 @@ export class LinksController {
         }
 
         return this.linksService.create(body);
+    }
+
+    @Delete('/')
+    @Roles(Role.AppUser)
+    @UseGuards(JwtAuthGuard)
+    async removeLink(@CurrentUser() user, @Body() body: { clanTag: string; tag: string }) {
+        await this.linksService.canUnlink(user.user_id, body.clanTag, body.tag);
+        return this.linksService.remove(body.tag);
     }
 }

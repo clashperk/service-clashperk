@@ -1,11 +1,19 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { HttpException, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { APIClan } from 'clashofclans.js';
+import { Db } from 'mongodb';
 import { Model } from 'mongoose';
+import { RedisClient } from '../redis.module';
 import { PlayerLink, PlayerLinkDocument } from './schemas/links.schema';
 
 @Injectable()
 export class LinksService {
-    constructor(@InjectModel(PlayerLink.name) private playerLinkModel: Model<PlayerLinkDocument>) {}
+    private readonly logger = new Logger(LinksService.name);
+    constructor(
+        @InjectModel(PlayerLink.name) private playerLinkModel: Model<PlayerLinkDocument>,
+        @Inject('DATABASE_CONNECTION') private db: Db,
+        @Inject('REDIS_CONNECTION') private redis: RedisClient
+    ) {}
 
     async findAll(args: string[]): Promise<PlayerLink[]> {
         if (!Array.isArray(args)) {
@@ -51,6 +59,38 @@ export class LinksService {
             createdAt: new Date()
         });
 
+        this.logger.log(`Creating link for ${link.name} (${link.tag}) for ${link.username} (${link.userId})`);
         return createdLink.save();
+    }
+
+    async canUnlink(userId: string, clanTag: string, playerTag: string) {
+        const clan = (await this.redis.json.get(`C${clanTag}`)) as unknown as APIClan;
+        if (!clan) throw new HttpException('Targe clan not found.', 404);
+
+        const [links, target] = await Promise.all([
+            this.playerLinkModel.find({ userId, verified: true }),
+            this.playerLinkModel.findOne({ tag: playerTag })
+        ]);
+
+        if (!target) throw new HttpException('Target player not found.', 404);
+        if (target.userId !== userId && target.verified) {
+            throw new HttpException('You cannot unlink an account that is verified.', 403);
+        }
+
+        const tags = links.map((link) => link.tag);
+        const isLeader = clan.memberList.some((member) => tags.includes(member.tag) && ['leader', 'coLeader'].includes(member.role));
+        if (!isLeader) {
+            throw new HttpException('You can only unlink, if you are a verified Leader/Co-Leader in the clan.', 403);
+        }
+
+        const memberIsInClan = clan.memberList.some((member) => member.tag === playerTag);
+        if (!memberIsInClan) throw new HttpException('The player is no longer in your clan.', 403);
+
+        return isLeader;
+    }
+
+    async remove(tag: string) {
+        await this.playerLinkModel.deleteOne({ tag });
+        return { message: 'OK' };
     }
 }

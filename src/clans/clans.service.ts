@@ -3,8 +3,11 @@ import { InjectModel } from '@nestjs/mongoose';
 import { APIClan, APIPlayer } from 'clashofclans.js';
 import { Db } from 'mongodb';
 import { Model } from 'mongoose';
+import { Collections } from '../db.module';
 import { RedisClient } from '../redis.module';
 import { CapitalDonation, CapitalDonationDocument } from './schemas/capital.schema';
+
+const deletableRoles = ['leader', 'coLeader'];
 
 @Injectable()
 export class ClansService {
@@ -22,7 +25,7 @@ export class ClansService {
             .exec();
     }
 
-    async getClanMembers(clanTag: string) {
+    async getClanMembers(authUserId: string, clanTag: string) {
         const clan = (await this.redis.json.get(`C${clanTag}`)) as unknown as APIClan;
         if (!clan) throw new HttpException('Not found', 404);
         const raw = await this.redis.json.mGet(
@@ -43,10 +46,13 @@ export class ClansService {
             townHallLevel: player.townHallLevel
         }));
 
-        const links = await this.db
-            .collection('PlayerLinks')
-            .find({ tag: { $in: memberList.map((mem) => mem.tag) } })
-            .toArray();
+        const collection = this.db.collection(Collections.PLAYER_LINKS);
+        const [links, userLinks] = await Promise.all([
+            collection.find({ tag: { $in: memberList.map((mem) => mem.tag) } }).toArray(),
+            collection.find({ userId: authUserId, verified: true }).toArray()
+        ]);
+        const userTags = userLinks.map((link) => link.tag);
+
         const linksMap = links.reduce((acc, cur) => {
             acc[cur.tag] = cur;
             return acc;
@@ -58,7 +64,13 @@ export class ClansService {
             members: clan.members,
             memberList: memberList.map((member) => {
                 const user = linksMap[member.tag];
-                return { ...member, userId: user?.userId, username: user?.username, verified: user?.verified };
+                return {
+                    ...member,
+                    userId: user?.userId,
+                    username: user?.username,
+                    verified: user?.verified,
+                    deletable: userTags.some((tag) => membersMap[tag] && deletableRoles.includes(membersMap[tag].role))
+                };
             })
         };
     }

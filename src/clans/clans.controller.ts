@@ -1,4 +1,5 @@
 import { Controller, Get, Header, Param, UseGuards } from '@nestjs/common';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Role, Roles } from '../auth/decorators/roles.decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -19,7 +20,7 @@ export class ClansController {
     @Get('/:clanTag/members')
     @Roles(Role.AppUser)
     @UseGuards(JwtAuthGuard)
-    async getClanMembers(@Param('clanTag') clanTag: string) {
-        return this.clansService.getClanMembers(clanTag);
+    async getClanMembers(@CurrentUser() userInfo, @Param('clanTag') clanTag: string) {
+        return this.clansService.getClanMembers(userInfo.user_id, clanTag);
     }
 }
