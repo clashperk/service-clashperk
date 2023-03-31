@@ -21,7 +21,12 @@ export class GuildsService {
                         from: Collections.CLAN_STORES,
                         localField: 'guild',
                         foreignField: 'guild',
-                        as: 'clans'
+                        as: 'clans',
+                        pipeline: [
+                            {
+                                $sort: { name: 1 }
+                            }
+                        ]
                     }
                 },
                 {

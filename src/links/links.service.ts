@@ -54,12 +54,12 @@ export class LinksService {
             tag: link.tag,
             userId: link.userId,
             username: link.username,
-            order: Math.max(...links.map((link) => link.order)) + 1,
+            order: links.length ? Math.max(...links.map((link) => link.order)) + 1 : 0,
             verified: false,
             createdAt: new Date()
         });
 
-        this.logger.log(`Creating link for ${link.name} (${link.tag}) for ${link.username} (${link.userId})`);
+        this.logger.log(`Creating link for ${link.name} (${link.tag}) - ${link.username} (${link.userId})`);
         return createdLink.save();
     }
 
@@ -85,6 +85,8 @@ export class LinksService {
 
         const memberIsInClan = clan.memberList.some((member) => member.tag === playerTag);
         if (!memberIsInClan) throw new HttpException('The player is no longer in your clan.', 403);
+
+        this.logger.log(`Deleting link ${target.name} (${target.tag}) - ${target.username} (${target.userId}) by ${userId}`);
 
         return isLeader;
     }
