@@ -16,6 +16,14 @@ export class WarsController {
         return this.warService.getOne(tag);
     }
 
+    // @UseGuards(JwtAuthGuard, RolesGuard)
+    // @Roles(Role.Admin)
+    // @Header('Cache-Control', 'max-age=600')
+    @Get('/stats/cwl/:clanTag')
+    async getCWLStats(@Param('clanTag') clanTag: string) {
+        return this.warService.getCWLStats(clanTag);
+    }
+
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(Role.Admin)
     @Header('Cache-Control', 'max-age=600')

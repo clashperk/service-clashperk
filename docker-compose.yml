@@ -2,11 +2,12 @@ version: "3.6"
 
 services:
   api:
+    image: 432159388664.dkr.ecr.us-east-1.amazonaws.com/service-clashperk:latest
     container_name: api
     restart: always
-    build:
-      context: .
-      dockerfile: .docker/Dockerfile
+    # build:
+    #   context: .
+    #   dockerfile: .docker/Dockerfile
     env_file:
       - .env
     hostname: api

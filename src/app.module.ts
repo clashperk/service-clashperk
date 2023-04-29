@@ -10,6 +10,7 @@ import { GuildsModule } from './guilds/guilds.module';
 import { LinksModule } from './links/links.module';
 import { UsersModule } from './users/users.module';
 import { WarsModule } from './wars/wars.module';
+import { RostersModule } from './rosters/rosters.module';
 
 @Module({
     imports: [
@@ -30,7 +31,8 @@ import { WarsModule } from './wars/wars.module';
         LinksModule,
         WarsModule,
         ClansModule,
-        GuildsModule
+        GuildsModule,
+        RostersModule
     ],
     controllers: [AppController],
     providers: [AppService]

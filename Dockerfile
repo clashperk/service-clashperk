@@ -16,12 +16,10 @@ ENV NODE_ENV production
 
 RUN npm install --omit=dev
 
-COPY . .
-
 COPY --from=deps /app/dist ./dist
 
 EXPOSE 8080
 
 ENV PORT 8080
 
-CMD ["node", "dist/src/main"]
+CMD ["node",  "dist/src/main"]
