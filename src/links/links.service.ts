@@ -26,7 +26,18 @@ export class LinksService {
 
         const isId = args.every((id) => /^\d{17,19}/.test(id));
         const where = isId ? { userId: { $in: args } } : { tag: { $in: args } };
-        return this.playerLinkModel.find(where, { name: 1, tag: 1, userId: 1, username: 1, _id: 0 }).limit(100);
+        return this.playerLinkModel
+            .find(where, {
+                name: 1,
+                tag: 1,
+                userId: 1,
+                username: 1,
+                order: 1,
+                _id: 0,
+                verified: 1
+            })
+            .sort({ order: 1 })
+            .limit(100);
     }
 
     async findOne(query: string): Promise<PlayerLink[]> {
@@ -36,13 +47,17 @@ export class LinksService {
         const isId = /^\d{17,19}/.test(query);
         const where = isId ? { userId: query } : { tag: query };
 
-        const links = await this.playerLinkModel.find(where, {
-            name: 1,
-            tag: 1,
-            userId: 1,
-            username: 1,
-            _id: 0
-        });
+        const links = await this.playerLinkModel
+            .find(where, {
+                name: 1,
+                tag: 1,
+                userId: 1,
+                username: 1,
+                order: 1,
+                _id: 0,
+                verified: 1
+            })
+            .sort({ order: 1 });
         return links;
     }
 
