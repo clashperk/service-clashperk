@@ -15,7 +15,6 @@ export class AppController {
 
     @Post('/webhook')
     async webhook(@Body() body) {
-        console.log(body);
         if (body.type !== 'DEPLOY') return { message: 'OK' };
         this.logger.log(`Received webhook for ${body.service.name} (${body.status})`);
 
