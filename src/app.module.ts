@@ -8,9 +8,10 @@ import { AuthModule } from './auth/auth.module';
 import { ClansModule } from './clans/clans.module';
 import { GuildsModule } from './guilds/guilds.module';
 import { LinksModule } from './links/links.module';
+import { RedisModule } from './redis.module';
+import { RostersModule } from './rosters/rosters.module';
 import { UsersModule } from './users/users.module';
 import { WarsModule } from './wars/wars.module';
-import { RostersModule } from './rosters/rosters.module';
 
 @Module({
     imports: [
@@ -26,6 +27,7 @@ import { RostersModule } from './rosters/rosters.module';
             ttl: 60,
             limit: 10
         }),
+        RedisModule,
         UsersModule,
         AuthModule,
         LinksModule,
