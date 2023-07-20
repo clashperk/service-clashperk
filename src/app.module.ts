@@ -12,6 +12,7 @@ import { RedisModule } from './redis.module';
 import { RostersModule } from './rosters/rosters.module';
 import { UsersModule } from './users/users.module';
 import { WarsModule } from './wars/wars.module';
+import { DatabaseModule } from './db.module';
 
 @Module({
     imports: [
@@ -27,6 +28,7 @@ import { WarsModule } from './wars/wars.module';
             ttl: 60,
             limit: 10
         }),
+        DatabaseModule,
         RedisModule,
         UsersModule,
         AuthModule,

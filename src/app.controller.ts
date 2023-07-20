@@ -1,6 +1,9 @@
-import { Body, Controller, Get, Logger, Post } from '@nestjs/common';
+import { Body, Controller, Get, Logger, Post, UseGuards } from '@nestjs/common';
 import { fetch } from 'undici';
 import { AppService } from './app.service';
+import { Role, Roles } from './auth/decorators/roles.decorators';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { RolesGuard } from './auth/guards/roles.guard';
 
 @Controller()
 export class AppController {
@@ -11,6 +14,13 @@ export class AppController {
     @Get()
     getHello(): string {
         return this.appService.getHello();
+    }
+
+    @Get('/applications')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.GitHubCLI)
+    async getBots() {
+        return this.appService.getBots();
     }
 
     @Post('/webhook')

@@ -3,7 +3,8 @@ import { SetMetadata } from '@nestjs/common';
 export enum Role {
     User = 'user',
     Admin = 'admin',
-    AppUser = 'appUser'
+    AppUser = 'appUser',
+    GitHubCLI = 'github_cli'
 }
 
 export const ROLES_KEY = 'roles';
