@@ -17,7 +17,7 @@ export class AuthService {
     }
 
     async login(user: any) {
-        const payload = { username: user.username, scopes: ['read'] };
+        const payload = { username: user.username, roles: ['github_cli', 'admin', 'appUser'] };
         return {
             accessToken: this.jwtService.sign(payload)
         };

@@ -26,7 +26,7 @@ import { DatabaseModule } from './db.module';
         }),
         ThrottlerModule.forRoot({
             ttl: 60,
-            limit: 10
+            limit: 15
         }),
         DatabaseModule,
         RedisModule,

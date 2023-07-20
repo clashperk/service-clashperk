@@ -1,7 +1,9 @@
 import { Body, Controller, Delete, Get, HttpException, Param, Post, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Role, Roles } from '../auth/decorators/roles.decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RateLimitGuard } from '../auth/guards/rate-limit.guard';
 import { LinksService } from './links.service';
 
 @Controller('/links')
@@ -14,13 +16,16 @@ export class LinksController {
     }
 
     @Post('/bulk')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, RateLimitGuard)
+    @Throttle(15, 60)
     async batch(@Body() body: string[]) {
         return this.linksService.findAll(body);
     }
 
     @Get('/:id')
     @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, RateLimitGuard)
+    @Throttle(15, 60)
     async getLink(@Param('id') id: string) {
         return this.linksService.findOne(id);
     }
