@@ -18,8 +18,8 @@ export class WarsService {
     ) {}
 
     async getOne(tag: string, months?: number) {
-        if (months && (months < 1 || months > 6)) throw new HttpException('Invalid months', 400);
-        months ??= new Date().getDate() >= 10 ? 3 : 4;
+        if (!isNaN(months) && (months < 0 || months > 6)) throw new HttpException('Invalid months', 400);
+        if (isNaN(months)) months = new Date().getDate() >= 10 ? 3 : 4;
 
         const cursor = this.clanWarModel.aggregate<{
             history: WarHistory[];
@@ -45,6 +45,9 @@ export class WarsService {
                     ],
                     preparationStartTime: {
                         $gte: moment().startOf('month').subtract(months, 'month').toDate()
+                    },
+                    endTime: {
+                        $lte: moment().toDate()
                     }
                 }
             },
@@ -53,14 +56,6 @@ export class WarsService {
                     _id: -1
                 }
             },
-            // {
-            //     $sort: {
-            //         endTime: -1
-            //     }
-            // },
-            // {
-            //     $limit: 30
-            // },
             {
                 $facet: {
                     history: [
@@ -189,7 +184,10 @@ export class WarsService {
                                                 {
                                                     'opponent.members.tag': tag
                                                 }
-                                            ]
+                                            ],
+                                            endTime: {
+                                                $lte: moment().toDate()
+                                            }
                                         }
                                     },
                                     {
