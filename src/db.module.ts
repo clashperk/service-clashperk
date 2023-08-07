@@ -19,7 +19,7 @@ export const enum Collections {
 
     FLAGS = 'Flags',
 
-    CLAN_ROSTERS = 'ClanRosters',
+    CLAN_ROSTERS = 'Rosters',
 
     PLAYER_LINKS = 'PlayerLinks',
     USERS = 'Users',
