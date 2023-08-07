@@ -1,31 +1,26 @@
 import { Controller, Get, Header, Param, Query, UseGuards } from '@nestjs/common';
-import { Role, Roles } from '../auth/decorators/roles.decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { WarsService } from './wars.service';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 @Controller('/wars')
+@UseGuards(JwtAuthGuard, RolesGuard, ThrottlerGuard)
 export class WarsController {
     constructor(private warService: WarsService) {}
 
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles(Role.Admin)
     @Header('Cache-Control', 'max-age=600')
     @Get('/members/:tag')
-    async getWars(@Param('tag') tag: string) {
-        return this.warService.getOne(tag);
+    async getWars(@Param('tag') tag: string, @Query('months') months: string) {
+        return this.warService.getOne(tag, +months);
     }
 
-    // @UseGuards(JwtAuthGuard, RolesGuard)
-    // @Roles(Role.Admin)
-    // @Header('Cache-Control', 'max-age=600')
+    @Header('Cache-Control', 'max-age=600')
     @Get('/stats/cwl/:clanTag')
     async getCWLStats(@Param('clanTag') clanTag: string) {
         return this.warService.getCWLStats(clanTag);
     }
 
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles(Role.Admin)
     @Header('Cache-Control', 'max-age=600')
     @Get('/:id')
     async getWar(@Param('id') id: string, @Query('clanTag') clanTag: string) {

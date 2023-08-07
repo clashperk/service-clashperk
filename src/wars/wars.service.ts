@@ -17,7 +17,10 @@ export class WarsService {
         @Inject('REDIS_CONNECTION') private readonly redis: RedisClient
     ) {}
 
-    async getOne(tag: string) {
+    async getOne(tag: string, months?: number) {
+        if (months && (months < 1 || months > 6)) throw new HttpException('Invalid months', 400);
+        months ??= new Date().getDate() >= 10 ? 3 : 4;
+
         const cursor = this.clanWarModel.aggregate<{
             history: WarHistory[];
             summary: {
@@ -41,10 +44,7 @@ export class WarsService {
                         }
                     ],
                     preparationStartTime: {
-                        $gte: moment()
-                            .startOf('month')
-                            .subtract(new Date().getDate() >= 10 ? 3 : 4, 'month')
-                            .toDate()
+                        $gte: moment().startOf('month').subtract(months, 'month').toDate()
                     }
                 }
             },
