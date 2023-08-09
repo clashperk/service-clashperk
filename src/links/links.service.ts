@@ -69,6 +69,8 @@ export class LinksService {
             tag: link.tag,
             userId: link.userId,
             username: link.username,
+            displayName: link.displayName,
+            discriminator: link.discriminator,
             order: links.length ? Math.max(...links.map((link) => link.order)) + 1 : 0,
             verified: false,
             createdAt: new Date()

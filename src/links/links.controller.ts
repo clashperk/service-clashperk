@@ -33,8 +33,10 @@ export class LinksController {
     @Post('/')
     @Roles(Role.AppUser)
     @UseGuards(JwtAuthGuard)
-    async createLink(@Body() body: { name: string; tag: string; userId: string; username: string }) {
-        if (!(body.name && body.tag && body.userId && body.username)) {
+    async createLink(
+        @Body() body: { name: string; tag: string; userId: string; username: string; displayName: string; discriminator: string }
+    ) {
+        if (!(body.name && body.tag && body.userId && body.username && body.displayName && body.discriminator)) {
             throw new HttpException({ reason: 'Missing required fields.' }, 400);
         }
 

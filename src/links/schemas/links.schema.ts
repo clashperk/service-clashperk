@@ -12,6 +12,12 @@ export class PlayerLink {
     username: string;
 
     @Prop()
+    displayName: string;
+
+    @Prop()
+    discriminator: string;
+
+    @Prop()
     name: string;
 
     @Prop()
