@@ -28,6 +28,7 @@
         "@nestjs/mongoose": "^9.2.1",
         "@nestjs/passport": "^9.0.3",
         "@nestjs/platform-express": "^9.3.9",
+        "@nestjs/terminus": "^10.0.1",
         "@nestjs/throttler": "^4.0.0",
         "clashofclans.js": "^3.0.2",
         "discord-api-types": "^0.37.37",
