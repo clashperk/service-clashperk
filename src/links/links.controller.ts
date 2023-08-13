@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Role, Roles } from '../auth/decorators/roles.decorators';
@@ -19,8 +19,9 @@ export class LinksController {
     }
 
     @UseGuards(JwtAuthGuard, RateLimitGuard)
-    @Throttle(3, 60)
+    @Throttle(15, 60)
     @Post('/bulk')
+    @HttpCode(200)
     async batch(@Body() body: BulkActionInput) {
         return this.linksService.findAll(body.items);
     }
