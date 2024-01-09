@@ -2,7 +2,7 @@
     "name": "service-clashperk",
     "version": "0.0.1",
     "description": "API for ClashPerk Bot",
-    "author": "SUVAJIT <suvajit.me@gmail.com>",
+    "author": "",
     "private": true,
     "license": "UNLICENSED",
     "scripts": {
