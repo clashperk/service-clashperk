@@ -12,6 +12,11 @@ export class GuildsController {
         return await this.guildService.getGuild(id);
     }
 
+    @Get('/:id/clans/categories')
+    async getClans(@Param('id') id: string) {
+        return await this.guildService.getClans(id);
+    }
+
     @Get('/:id/members/search')
     async getMembers(@Param('id') id: string, @Query('query') query: string) {
         return await this.guildService.getMembers(id, query);

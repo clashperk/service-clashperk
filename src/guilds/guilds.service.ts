@@ -47,6 +47,50 @@ export class GuildsService {
         return guild;
     }
 
+    async getClans(guildId: string) {
+        const categories = await this.db.collection(Collections.CLAN_CATEGORIES).find({ guildId }).sort({ order: 1 }).toArray();
+        const clans = await this.db.collection(Collections.CLAN_STORES).find({ guild: guildId }).sort({ order: 1 }).toArray();
+        const categoryIds = categories.map((category) => category._id.toHexString());
+        const categoryMap = Object.fromEntries(categories.map((cat) => [cat._id.toHexString(), cat]));
+
+        const clansReduced = clans.reduce<Record<string, any[]>>((prev, curr) => {
+            let categoryId = curr.categoryId?.toHexString() || 'general';
+            if (!categoryIds.includes(categoryId)) categoryId = 'general';
+
+            prev[categoryId] ??= [];
+            prev[categoryId].push({
+                _id: curr._id,
+                name: curr.name,
+                tag: curr.tag,
+                guildId: curr.guild
+            });
+            return prev;
+        }, {});
+
+        return {
+            categories: categories.map((category) => ({
+                _id: category._id,
+                name: category.displayName,
+                order: category.order,
+                guildId: category.guildId
+            })),
+            grouped: Object.entries(clansReduced)
+                .map(([categoryId, clans]) => ({
+                    _id: categoryMap[categoryId]?._id || 'general',
+                    name: categoryMap[categoryId]?.displayName || 'General',
+                    order: categoryMap[categoryId]?.order || 0,
+                    clans
+                }))
+                .sort((a, b) => a.order - b.order),
+            clans: clans.map((clan) => ({
+                _id: clan._id,
+                name: clan.name,
+                tag: clan.tag,
+                guildId: clan.guild
+            }))
+        };
+    }
+
     async getMembers(guildId: string, query: string) {
         const res = await fetch(`https://discord.com/api/guilds/${guildId}/members/search?query=${query}&limit=50`, {
             headers: {
