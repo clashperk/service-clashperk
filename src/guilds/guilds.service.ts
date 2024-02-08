@@ -161,6 +161,7 @@ export class GuildsService {
 
         await this.db.collection(Collections.CLAN_STORES).bulkWrite(clanOps);
         await this.db.collection(Collections.CLAN_CATEGORIES).bulkWrite(categoryOps);
+        await this.db.collection(Collections.SETTINGS).updateOne({ guildId }, { $set: { clansSortingKey: 'order' } });
 
         return this.getClans(guildId);
     }
