@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GuildsService } from './guilds.service';
 
@@ -15,6 +15,11 @@ export class GuildsController {
     @Get('/:id/clans/categories')
     async getClans(@Param('id') id: string) {
         return await this.guildService.getClans(id);
+    }
+
+    @Patch('/:id/clans')
+    async updateClanCategories(@Param('id') id: string, @Body() body) {
+        return await this.guildService.updateClanCategories(body, id);
     }
 
     @Get('/:id/members/search')

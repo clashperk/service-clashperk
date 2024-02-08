@@ -1,5 +1,5 @@
 import { HttpException, Inject, Injectable } from '@nestjs/common';
-import { Db } from 'mongodb';
+import { AnyBulkWriteOperation, Db, ObjectId } from 'mongodb';
 import { fetch } from 'undici';
 import { Collections } from '../db.module';
 import { RedisClient } from '../redis.module';
@@ -62,10 +62,31 @@ export class GuildsService {
                 _id: curr._id,
                 name: curr.name,
                 tag: curr.tag,
+                order: curr.order ?? 0,
                 guildId: curr.guild
             });
             return prev;
         }, {});
+
+        const clansGrouped = Object.entries(clansReduced).map(([categoryId, clans]) => ({
+            _id: categoryMap[categoryId]?._id || 'general',
+            name: categoryMap[categoryId]?.displayName || 'General',
+            order: categoryMap[categoryId]?.order || 0,
+            clans
+        }));
+
+        for (const categoryId of categoryIds) {
+            const category = categoryMap[categoryId];
+            if (category && !(categoryId in clansReduced)) {
+                clansGrouped.push({
+                    _id: category._id,
+                    name: category.displayName,
+                    order: category.order,
+                    clans: []
+                });
+            }
+        }
+        clansGrouped.sort((a, b) => a.order - b.order);
 
         return {
             categories: categories.map((category) => ({
@@ -74,21 +95,74 @@ export class GuildsService {
                 order: category.order,
                 guildId: category.guildId
             })),
-            grouped: Object.entries(clansReduced)
-                .map(([categoryId, clans]) => ({
-                    _id: categoryMap[categoryId]?._id || 'general',
-                    name: categoryMap[categoryId]?.displayName || 'General',
-                    order: categoryMap[categoryId]?.order || 0,
-                    clans
-                }))
-                .sort((a, b) => a.order - b.order),
+            grouped: clansGrouped,
             clans: clans.map((clan) => ({
                 _id: clan._id,
                 name: clan.name,
                 tag: clan.tag,
+                order: clan.order,
                 guildId: clan.guild
             }))
         };
+    }
+
+    async updateClanCategories(
+        clanGroup: {
+            _id: string | ObjectId;
+            name: any;
+            order: any;
+            clans: any[];
+        }[],
+        guildId: string
+    ) {
+        const clanOps: AnyBulkWriteOperation<any>[] = [];
+        const categoryOps: AnyBulkWriteOperation<any>[] = [];
+
+        const clans = clanGroup
+            .flatMap((cg) => cg.clans.map((clan) => ({ ...clan, categoryId: cg._id })))
+            .sort((a, b) => {
+                if (a.categoryId === 'general' && b.categoryId !== 'general') {
+                    return -1; // a comes before b
+                } else if (a.categoryId !== 'general' && b.categoryId === 'general') {
+                    return 1; // b comes before a
+                } else {
+                    return 0; // maintain original order if neither or both are 'general'
+                }
+            });
+
+        clans.forEach((clan, order) => {
+            clanOps.push({
+                updateOne: {
+                    filter: { _id: new ObjectId(clan._id), guild: guildId },
+                    update: {
+                        $set: {
+                            order,
+                            categoryId: ObjectId.isValid(clan.categoryId) ? new ObjectId(clan.categoryId) : null
+                        }
+                    }
+                }
+            });
+        });
+
+        clanGroup.forEach((cat, order) => {
+            if (ObjectId.isValid(cat._id)) {
+                categoryOps.push({
+                    updateOne: {
+                        filter: { _id: new ObjectId(cat._id), guildId },
+                        update: {
+                            $set: {
+                                order: order
+                            }
+                        }
+                    }
+                });
+            }
+        });
+
+        await this.db.collection(Collections.CLAN_STORES).bulkWrite(clanOps);
+        await this.db.collection(Collections.CLAN_CATEGORIES).bulkWrite(categoryOps);
+
+        return this.getClans(guildId);
     }
 
     async getMembers(guildId: string, query: string) {
