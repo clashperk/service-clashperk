@@ -61,7 +61,7 @@ export class LinksService {
         return links;
     }
 
-    async create(link: Omit<PlayerLink, 'order' | 'verified' | 'createdAt'>): Promise<PlayerLink> {
+    async create(link: Omit<PlayerLink, 'order' | 'verified' | 'createdAt' | 'source'>): Promise<PlayerLink> {
         const links = await this.playerLinkModel.find({ userId: link.userId });
 
         const createdLink = new this.playerLinkModel({
@@ -72,6 +72,7 @@ export class LinksService {
             displayName: link.displayName,
             discriminator: link.discriminator,
             order: links.length ? Math.max(...links.map((link) => link.order)) + 1 : 0,
+            source: 'web',
             verified: false,
             createdAt: new Date()
         });

@@ -24,6 +24,9 @@ export class PlayerLink {
     tag: string;
 
     @Prop()
+    source: string;
+
+    @Prop()
     order: number;
 
     @Prop()
