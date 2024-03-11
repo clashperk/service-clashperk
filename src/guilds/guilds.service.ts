@@ -167,10 +167,10 @@ export class GuildsService {
     }
 
     async getMembers(guildId: string, query: string) {
+        const bot = await this.db.collection('CustomBots').findOne({ guildIds: guildId });
+        const token = bot ? bot.token : process.env.DISCORD_TOKEN;
         const res = await fetch(`https://discord.com/api/guilds/${guildId}/members/search?query=${query}&limit=50`, {
-            headers: {
-                Authorization: `Bot ${process.env.DISCORD_TOKEN}`
-            }
+            headers: { Authorization: `Bot ${token}` }
         });
         return await res.json();
     }
