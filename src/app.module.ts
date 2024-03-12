@@ -28,7 +28,7 @@ import { WarsModule } from './wars/wars.module';
         }),
         ThrottlerModule.forRoot({
             ttl: 60,
-            limit: 15
+            limit: 60
         }),
         DatabaseModule,
         RedisModule,
