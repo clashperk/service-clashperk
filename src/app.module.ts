@@ -27,8 +27,8 @@ import { WarsModule } from './wars/wars.module';
             inject: [ConfigService]
         }),
         ThrottlerModule.forRoot({
-            ttl: 60,
-            limit: 60
+            ttl: 10,
+            limit: 30
         }),
         DatabaseModule,
         RedisModule,
