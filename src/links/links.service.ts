@@ -81,8 +81,13 @@ export class LinksService {
         return createdLink.save();
     }
 
+    public async getClanFromRedis(clanTag: string) {
+        const raw = await this.redis.json.mGet([`CLAN:${clanTag}`, `C${clanTag}`], '$');
+        return raw.flat().filter((_) => _)[0] as unknown as APIClan | null;
+    }
+
     async canUnlink(userId: string, clanTag: string, playerTag: string) {
-        const clan = (await this.redis.json.get(`C${clanTag}`)) as unknown as APIClan;
+        const clan = await this.getClanFromRedis(clanTag);
         if (!clan) throw new HttpException('Targe clan not found.', 404);
 
         const [links, target] = await Promise.all([

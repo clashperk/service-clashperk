@@ -25,13 +25,15 @@ export class ClansService {
             .exec();
     }
 
+    public async getClanFromRedis(clanTag: string) {
+        const raw = await this.redis.json.mGet([`CLAN:${clanTag}`, `C${clanTag}`], '$');
+        return raw.flat().filter((_) => _)[0] as unknown as APIClan | null;
+    }
+
     async getClanMembers(authUserId: string, clanTag: string) {
-        const clan = (await this.redis.json.get(`C${clanTag}`)) as unknown as APIClan;
+        const clan = await this.getClanFromRedis(clanTag);
         if (!clan) throw new HttpException('Not found', 404);
-        const raw = await this.redis.json.mGet(
-            clan.memberList.map((mem) => `P${mem.tag}`),
-            '$'
-        );
+        const raw = await this.redis.json.mGet(clan.memberList.map((mem) => [`P${mem.tag}`, `PLAYER:${mem.tag}`]).flat(), '$');
 
         const membersMap = clan.memberList.reduce((acc, cur) => {
             acc[cur.tag] = cur;

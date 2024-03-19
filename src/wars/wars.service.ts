@@ -568,14 +568,11 @@ export class WarsService {
             }
         }
 
-        const clan = (await this.redis.json.get(`C${clanTag}`)) as unknown as APIClan;
+        const clan = await this.getClanFromRedis(clanTag);
         if (!clan) throw new HttpException('Clan Not Found', 404);
 
         const playerTags = [...new Set(clan.memberList.map((m) => m.tag)), ...Object.keys(members)];
-        const raw = await this.redis.json.mGet(
-            playerTags.map((tag) => `P${tag}`),
-            '$'
-        );
+        const raw = await this.redis.json.mGet(playerTags.map((tag) => [`P${tag}`, `PLAYER:${tag}`]).flat(), '$');
 
         const membersMap = clan.memberList.reduce((acc, cur) => {
             acc[cur.tag] = cur;
@@ -613,5 +610,10 @@ export class WarsService {
                 };
             })
         };
+    }
+
+    public async getClanFromRedis(clanTag: string) {
+        const raw = await this.redis.json.mGet([`CLAN:${clanTag}`, `C${clanTag}`], '$');
+        return raw.flat().filter((_) => _)[0] as unknown as APIClan | null;
     }
 }
