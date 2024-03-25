@@ -18,7 +18,7 @@ export class ClansService {
     ) {}
 
     async getCapitalDonations(clanTag: string): Promise<CapitalDonation[]> {
-        const createdAt = new Date(Date.now() - 1000 * 60 * 60 * 24 * 3);
+        const createdAt = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
         return this.capitalDonationModel
             .find({ 'clan.tag': clanTag, 'createdAt': { $gte: createdAt } })
             .sort({ _id: -1 })
