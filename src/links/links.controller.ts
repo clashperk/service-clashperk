@@ -1,6 +1,5 @@
-import { Body, Controller, Delete, Get, HttpException, Param, Post, UseGuards } from '@nestjs/common';
+import { BadGatewayException, Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Role, Roles } from '../auth/decorators/roles.decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RateLimitGuard } from '../auth/guards/rate-limit.guard';
@@ -33,21 +32,14 @@ export class LinksController {
     @Post('/')
     @Roles(Role.AppUser)
     @UseGuards(JwtAuthGuard)
-    async createLink(
-        @Body() body: { name: string; tag: string; userId: string; username: string; displayName: string; discriminator: string }
-    ) {
-        if (!(body.name && body.tag && body.userId && body.username && body.displayName && body.discriminator)) {
-            throw new HttpException({ reason: 'Missing required fields.' }, 400);
-        }
-
-        return this.linksService.create(body);
+    async createLink() {
+        throw new BadGatewayException('Endpoint disabled');
     }
 
     @Delete('/')
     @Roles(Role.AppUser)
     @UseGuards(JwtAuthGuard)
-    async removeLink(@CurrentUser() user, @Body() body: { clanTag: string; tag: string }) {
-        await this.linksService.canUnlink(user.user_id, body.clanTag, body.tag);
-        return this.linksService.remove(body.tag);
+    async removeLink() {
+        throw new BadGatewayException('Endpoint disabled');
     }
 }
